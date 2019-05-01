@@ -1,0 +1,64 @@
+Turbo Assembler	 Version 4.1	    03/04/19 15:23:57	    Page 1
+print_bi.asm
+
+
+
+      1	0000			     model tiny
+      2	0000			     .code
+      3
+      4				     extrn Num_to_hex:near
+      5
+      6				     org 100h
+      7
+      8	0100			     start:
+      9	0100  50 55 8B EC C7 46	02+	     push 004eh
+     10	      004E 5D
+     11	010A  50 55 8B EC C7 46	02+	     push 0640h
+     12	      0640 5D
+     13	0114  50 55 8B EC C7 46	02+	     push 0b800h
+     14	      B800 5D
+     15	011E  50 55 8B EC C7 46	02+	     push 0f0fh
+     16	      0F0F 5D
+     17	0128  E8 0000e			     call Num_to_hex
+     18
+     19	012B  B2 43			     mov dl, 43h
+     20	012D  B8 0200			     mov ax, 0200h
+     21	0130  CD 21			     int 21h
+     22
+     23	0132  B8 4C00			     mov ax, 4c00h
+     24	0135  CD 21			     int 21h
+     25
+     26				     end start
+Turbo Assembler	 Version 4.1	    03/04/19 15:23:57	    Page 2
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "03/04/19"
+??FILENAME			  Text	 "print_bi"
+??TIME				  Text	 "15:23:57"
+??VERSION			  Number 040A
+@32BIT				  Text	 0
+@CODE				  Text	 DGROUP
+@CODESIZE			  Text	 0
+@CPU				  Text	 0101H
+@CURSEG				  Text	 _TEXT
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 PRINT_BI
+@INTERFACE			  Text	 000H
+@MODEL				  Text	 1
+@STACK				  Text	 DGROUP
+@WORDSIZE			  Text	 2
+NUM_TO_HEX			  Near	 DGROUP:---- Extern
+START				  Near	 DGROUP:0100
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  _DATA				  16  0000 Word	  Public  DATA
+  _TEXT				  16  0137 Word	  Public  CODE
+

@@ -1,0 +1,68 @@
+Turbo Assembler	 Version 4.1	    02/28/19 18:38:39	    Page 1
+2file.asm
+
+
+
+      1	0000			     model tiny
+      2	0000			     .code
+      3
+      4				     extrn Frame:near
+      5
+      6				     org 100h
+      7
+      8	0100			     start:
+      9
+     10	0100  50 55 8B EC C7 46	02+	     push 004eh
+     11	      004E 5D
+     12	010A  50 55 8B EC C7 46	02+	     push 0014h
+     13	      0014 5D
+     14	0114  50 55 8B EC C7 46	02+	     push 0070d
+     15	      0046 5D
+     16	011E  50 55 8B EC C7 46	02+	     push 000ah
+     17	      000A 5D
+     18	0128  50 55 8B EC C7 46	02+	     push 000ah
+     19	      000A 5D
+     20	0132  90			     nop
+     21	0133  90			     nop
+     22	0134  90			     nop
+     23	0135  90			     nop
+     24	0136  90			     nop
+     25	0137  E8 0000e			     call Frame
+     26
+     27	013A  B8 4C00			     mov ax, 4c00h
+     28	013D  CD 21			     int 21h
+     29
+     30				     end start
+Turbo Assembler	 Version 4.1	    02/28/19 18:38:39	    Page 2
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "02/28/19"
+??FILENAME			  Text	 "2file	  "
+??TIME				  Text	 "18:38:39"
+??VERSION			  Number 040A
+@32BIT				  Text	 0
+@CODE				  Text	 DGROUP
+@CODESIZE			  Text	 0
+@CPU				  Text	 0101H
+@CURSEG				  Text	 _TEXT
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 2FILE
+@INTERFACE			  Text	 000H
+@MODEL				  Text	 1
+@STACK				  Text	 DGROUP
+@WORDSIZE			  Text	 2
+FRAME				  Near	 DGROUP:---- Extern
+START				  Near	 DGROUP:0100
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  _DATA				  16  0000 Word	  Public  DATA
+  _TEXT				  16  013F Word	  Public  CODE
+

@@ -1,0 +1,109 @@
+Turbo Assembler	 Version 4.1	    03/01/19 21:56:32	    Page 1
+to2.asm
+
+
+
+      1				     Public Num_to_bin
+      2
+      3	0000			     model tiny
+      4	0000			     .code
+      5
+      6				     ;------------------------------------------------------------------------------
+      7				     ;Print bin	number
+      8				     ;
+      9				     ;Entry:
+     10				     ;	     num - number
+     11				     ;	     seg - segment
+     12				     ;	     pointer
+     13				     ;	     colour
+     14				     ;Exit:
+     15				     ;	     ax	- num of put bytes
+     16				     ;Destr:
+     17				     ;	     bx, cx, dx
+     18				     ;
+     19				     ;------------------------------------------------------------------------------
+     20
+     21
+     22	0000			     Num_to_bin	proc
+     23
+     24	0000  55				     push bp
+     25	0001  8B EC				     mov bp, sp
+     26
+     27	0003  56				     push si
+     28	0004  06				     push es
+     29
+     30
+     31	0005  8B 5E 06				     mov bx, [bp + 06h]
+     32	0008  8E C3				     mov es, bx
+     33
+     34	000A  8B 46 04				     mov ax, [bp + 04h]
+     35
+     36	000D  8B 5E 08				     mov bx, [bp + 08h]
+     37	0010  83 C3 20				     add bx, 20h
+     38
+     39	0013  33 C9				     xor cx, cx
+     40	0015  8B 76 0A				     mov si, [bp + 0ah]
+     41	0018  D1 E6 D1 E6 D1 E6	D1+		     shl si, 8
+     42	      E6 D1 E6 D1 E6 D1	E6+
+     43	      D1 E6
+     44
+     45	0028					     While_convert:
+     46	0028  8B D0				     mov dx, ax;
+     47	002A  D3 EA				     shr dx, cl;			     copy
+     48	002C  83 E2 01				     and dx, 0001h
+     49	002F  83 C2 30				     add dx, '0';			     % 2 (ASCII)
+     50	0032  0B D6				     or	dx, si;				     Colouor
+     51	0034  26: 89 17				     mov word ptr es:[bx], dx
+     52	0037  83 EB 02				     sub bx, 2
+     53	003A  80 C1 01				     add cl, 1
+     54	003D  80 F9 10				     cmp cl, 10h
+     55	0040  72 E6				     jb	While_convert
+     56
+     57	0042  07				     pop es
+Turbo Assembler	 Version 4.1	    03/01/19 21:56:32	    Page 2
+to2.asm
+
+
+
+     58	0043  5E				     pop si
+     59	0044  5D				     pop bp
+     60
+     61	0045  B8 0020				     mov ax, 20h
+     62	0048  C2 0008		     ret 08h
+     63
+     64	004B			     endp
+     65
+     66				     end
+Turbo Assembler	 Version 4.1	    03/01/19 21:56:32	    Page 3
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "03/01/19"
+??FILENAME			  Text	 "to2	  "
+??TIME				  Text	 "21:56:32"
+??VERSION			  Number 040A
+@32BIT				  Text	 0
+@CODE				  Text	 DGROUP
+@CODESIZE			  Text	 0
+@CPU				  Text	 0101H
+@CURSEG				  Text	 _TEXT
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 TO2
+@INTERFACE			  Text	 000H
+@MODEL				  Text	 1
+@STACK				  Text	 DGROUP
+@WORDSIZE			  Text	 2
+NUM_TO_BIN			  Near	 DGROUP:0000
+WHILE_CONVERT			  Near	 DGROUP:0028
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  _DATA				  16  0000 Word	  Public  DATA
+  _TEXT				  16  004B Word	  Public  CODE
+
