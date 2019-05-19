@@ -423,7 +423,7 @@ int fill_params(var* array_of_var, char* code)
     assert(cur[0] == '(');
 
     while (cur[0] != ')') {
-        free(cur);
+        free(cur);//TODO why it broke with two params
         cur = give_token();
 
         if (isalpha(cur[0])) {
@@ -867,8 +867,11 @@ vertex* GetP(var* array_of_var, func* array_of_func, Tree* mytree)
         char* end_of_func = give_token();
         sassert(end_of_func[0] == ')');
 
-        new_node->right_daughter = new_child;
-        new_child->parent = new_node;
+        if (new_child != nullptr)
+        {
+            new_node->right_daughter = new_child;
+            new_child->parent = new_node;
+        }
 
         free(end_of_func);
         free(next);
@@ -1711,32 +1714,32 @@ char* Make_standart_tree(func curr_func, var* array_of_arr, Tree* code_tree, cha
 
 void Print_standart_node(vertex* curr_node, char** tree_pointer)
 {
-    if (curr_node == nullptr)
-        return;
-
     **tree_pointer = '(';
+
+    if (curr_node == nullptr)
+    {
+        *(++*tree_pointer) = ')';
+        return;
+    }
     if (curr_node->data->type == Number)
     {
         *(++*tree_pointer) = Number;
         *(++*tree_pointer) = (char) curr_node->data->number;
-        /**(++*tree_pointer) = (char) curr_node->data->number >> 8;
-        *(++*tree_pointer) = (char) curr_node->data->number >> 16;
-        *(++*tree_pointer) = (char) curr_node->data->number >> 24;*/
+        *(++*tree_pointer) = (char) (curr_node->data->number >> 8);
+        *(++*tree_pointer) = (char) (curr_node->data->number >> 16);
+        *(++*tree_pointer) = (char) (curr_node->data->number >> 24);
         *(++*tree_pointer) = ')';
 
         //(*tree_pointer)++;
         return;
     }
-    if (curr_node->data->type == Body || curr_node->data->type == Operator)
+    if (curr_node->data->type == Body || curr_node->data->type == Operator || curr_node->data->type == Parameter)
     {
         *(++*tree_pointer) = curr_node->data->type;
         (*tree_pointer)++;
         Print_standart_node(curr_node->left_son, tree_pointer);
-        if (curr_node->right_daughter != nullptr)
-        {
-            (*tree_pointer)++;
-            Print_standart_node(curr_node->right_daughter, tree_pointer);
-        }
+        (*tree_pointer)++;
+        Print_standart_node(curr_node->right_daughter, tree_pointer);
         *(++*tree_pointer) = ')';
 
         return;
@@ -1784,4 +1787,62 @@ void Print_standart_node(vertex* curr_node, char** tree_pointer)
         *(++*tree_pointer) = ')';
         return;
     }
+    if (curr_node->data->type == Inicialise || curr_node->data->type == Variable)
+    {
+        *(++*tree_pointer) = curr_node->data->type;
+
+        int i = 0;
+        while(curr_node->data->var_name[i] != '\0')
+        {
+            *(++*tree_pointer) = curr_node->data->var_name[i];
+            i++;
+        }
+
+        *(++*tree_pointer) = ')';
+        return;
+    }
+    if (curr_node->data->type == Equality)
+    {
+        *(++*tree_pointer) = Equality;
+
+        (*tree_pointer)++;
+        Print_standart_node(curr_node->left_son, tree_pointer);
+        (*tree_pointer)++;
+        Print_standart_node(curr_node->right_daughter, tree_pointer);
+
+        *(++*tree_pointer) = ')';
+        return;
+    }
+
+    if (curr_node->data->type == Standart_func)
+    {
+        *(++*tree_pointer) = Standart_func;
+
+        if (!strcmp(curr_node->data->stand_func_name, "Luke"))
+            *(++*tree_pointer) = '1';
+        else if (!strcmp(curr_node->data->stand_func_name, "Leia"))
+            *(++*tree_pointer) = '0';
+
+        (*tree_pointer)++;
+        Print_standart_node(curr_node->right_daughter, tree_pointer);
+
+        *(++*tree_pointer) = ')';
+        return;
+    }
+    if (curr_node->data->type == Function) {
+        *(++*tree_pointer) = Function;
+
+        int i = 0;
+        while (curr_node->data->func_name[i] != '\0') {
+            *(++*tree_pointer) = curr_node->data->func_name[i];
+            i++;
+        }
+
+        (*tree_pointer)++;
+        Print_standart_node(curr_node->right_daughter, tree_pointer);
+
+        *(++*tree_pointer) = ')';
+        return;
+    }
+
 }
