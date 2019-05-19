@@ -1,0 +1,1 @@
+#In_the_far_far_away_galaxy  ( ){B{ia}{B{E{Va}{CCalc_fact{P{s*{Va}{Va}}{}}}}{B{S1{P{Va}{}}}{B{R{Va}}{}}}}} #Calc_fact  ( param ){B{I{O={Vparam}{N}}{B{R{N}}{B{S{P{N}{}}}{}}}}{B{ia}{B{E{Vparam}{s*{Va}{Vparam}}}{B{R{Vparam}}{}}}}} 

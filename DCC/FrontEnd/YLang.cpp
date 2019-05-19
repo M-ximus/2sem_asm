@@ -49,7 +49,10 @@ int Make_asm_file(var* array_of_var, func* array_of_func, const char* path)
         tree_buff = Make_standart_tree(array_of_func[i], array_of_var, fake, &tree_buff);
     }
 
-    printf("%s\n", start_tree_buff);
+    size_t num_to_print = tree_buff - start_tree_buff;
+    print_bin_file(start_tree_buff, num_to_print, way_to_out);
+
+    free(start_tree_buff);
     return 0;
 }
 
@@ -1714,11 +1717,11 @@ char* Make_standart_tree(func curr_func, var* array_of_arr, Tree* code_tree, cha
 
 void Print_standart_node(vertex* curr_node, char** tree_pointer)
 {
-    **tree_pointer = '(';
+    **tree_pointer = '{';
 
     if (curr_node == nullptr)
     {
-        *(++*tree_pointer) = ')';
+        *(++*tree_pointer) = '}';
         return;
     }
     if (curr_node->data->type == Number)
@@ -1728,19 +1731,32 @@ void Print_standart_node(vertex* curr_node, char** tree_pointer)
         *(++*tree_pointer) = (char) (curr_node->data->number >> 8);
         *(++*tree_pointer) = (char) (curr_node->data->number >> 16);
         *(++*tree_pointer) = (char) (curr_node->data->number >> 24);
-        *(++*tree_pointer) = ')';
+        *(++*tree_pointer) = '}';
 
         //(*tree_pointer)++;
         return;
     }
-    if (curr_node->data->type == Body || curr_node->data->type == Operator || curr_node->data->type == Parameter)
+    if (curr_node->data->type == Body || curr_node->data->type == Parameter)
     {
         *(++*tree_pointer) = curr_node->data->type;
         (*tree_pointer)++;
         Print_standart_node(curr_node->left_son, tree_pointer);
         (*tree_pointer)++;
         Print_standart_node(curr_node->right_daughter, tree_pointer);
-        *(++*tree_pointer) = ')';
+        *(++*tree_pointer) = '}';
+
+        return;
+    }
+    if (curr_node->data->type == Operator)
+    {
+        *(++*tree_pointer) = curr_node->data->type;
+        *(++*tree_pointer) = *(curr_node->data->oper_name);
+
+        (*tree_pointer)++;
+        Print_standart_node(curr_node->left_son, tree_pointer);
+        (*tree_pointer)++;
+        Print_standart_node(curr_node->right_daughter, tree_pointer);
+        *(++*tree_pointer) = '}';
 
         return;
     }
@@ -1760,7 +1776,7 @@ void Print_standart_node(vertex* curr_node, char** tree_pointer)
         (*tree_pointer)++;
         Print_standart_node(curr_node->right_daughter, tree_pointer);
 
-        *(++*tree_pointer) = ')';
+        *(++*tree_pointer) = '}';
         //(*tree_pointer)++;
         return;
     }
@@ -1775,7 +1791,7 @@ void Print_standart_node(vertex* curr_node, char** tree_pointer)
         (*tree_pointer)++;
         Print_standart_node(curr_node->left_son, tree_pointer);
 
-        *(++*tree_pointer) = ')';
+        *(++*tree_pointer) = '}';
         //(*tree_pointer)++;
         return;
     }
@@ -1784,7 +1800,7 @@ void Print_standart_node(vertex* curr_node, char** tree_pointer)
         *(++*tree_pointer) = Return;
         (*tree_pointer)++;
         Print_standart_node(curr_node->left_son, tree_pointer);
-        *(++*tree_pointer) = ')';
+        *(++*tree_pointer) = '}';
         return;
     }
     if (curr_node->data->type == Inicialise || curr_node->data->type == Variable)
@@ -1798,7 +1814,7 @@ void Print_standart_node(vertex* curr_node, char** tree_pointer)
             i++;
         }
 
-        *(++*tree_pointer) = ')';
+        *(++*tree_pointer) = '}';
         return;
     }
     if (curr_node->data->type == Equality)
@@ -1810,7 +1826,7 @@ void Print_standart_node(vertex* curr_node, char** tree_pointer)
         (*tree_pointer)++;
         Print_standart_node(curr_node->right_daughter, tree_pointer);
 
-        *(++*tree_pointer) = ')';
+        *(++*tree_pointer) = '}';
         return;
     }
 
@@ -1826,7 +1842,7 @@ void Print_standart_node(vertex* curr_node, char** tree_pointer)
         (*tree_pointer)++;
         Print_standart_node(curr_node->right_daughter, tree_pointer);
 
-        *(++*tree_pointer) = ')';
+        *(++*tree_pointer) = '}';
         return;
     }
     if (curr_node->data->type == Function) {
@@ -1841,8 +1857,22 @@ void Print_standart_node(vertex* curr_node, char** tree_pointer)
         (*tree_pointer)++;
         Print_standart_node(curr_node->right_daughter, tree_pointer);
 
-        *(++*tree_pointer) = ')';
+        *(++*tree_pointer) = '}';
         return;
     }
 
+}
+
+void print_bin_file(char* buff, size_t num_symbols, const char* path)
+{
+    assert(buff != nullptr);
+    assert(num_symbols != 0);
+    assert(path != nullptr);
+
+    FILE* out_file = fopen(path, "wb");
+    assert(out_file != nullptr);
+
+    fwrite(buff, sizeof(char), num_symbols, out_file);
+
+    fclose(out_file);
 }

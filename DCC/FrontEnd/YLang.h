@@ -133,7 +133,7 @@ struct counters
 
 //----------------------------------------------------------------------------------------------------------------------
 const char way_to_in[] = "Code.txt";
-const char way_to_out[] = "Asm.txt";
+const char way_to_out[] = "Obj.txt";
 const int num_of_var = 10;
 const int num_of_func = 10;
 //----------------------------------------------------------------------------------------------------------------------
@@ -303,5 +303,7 @@ int Make_asm_file(var* array_of_var, func* array_of_func, const char* path);
 char* Make_standart_tree(func curr_func, var* array_of_func, Tree* code_tree, char** tree_pointer);
 
 void Print_standart_node(vertex* curr_node, char** tree_pointer);
+
+void print_bin_file(char* buff, size_t num_symbols,const char* path);
 
 #endif //DOLBAEBCOMPILERCOLLECTION_YLANG_H
