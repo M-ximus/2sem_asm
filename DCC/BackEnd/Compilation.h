@@ -54,6 +54,7 @@ enum{
 };
 
 const int Max_num_var = 16;
+const size_t  Max_size_of_code = 6400;
 const char way_to_in[] = "Object_file.txt";
 const char way_to_out[] = "runfile.out";
 
@@ -94,6 +95,14 @@ struct func
     char* name;
     Tree* code;
     var arr_of_vars[Max_num_var];
+};
+
+struct func_info
+{
+    char* name;
+    int num_args;
+    int num_vars;
+    int address;
 };
 
 
@@ -182,4 +191,27 @@ int Push_arg(var* arr_of_args, char* new_var);
 
 char* GetInf(char** code);
 
+size_t Compile_tree(func* curr_func, func_info* func_table, char* start_pos);
+
+void compile_node(vertex* curr_node, var* arr_of_vars, func_info* arr_of_func);
+
+void add();
+
+void div();
+
+void cmp();
+
+void mul();
+
+void sub();
+
+void transform_var_table(func* curr_func);
+
+void push_func_addr(char* name, func_info* func_table, char* start_pos);
+
+int find_var(char* name, var* arr_of_var);
+
+void cut_stack(var* arr_of_vars);
+
+void aligh_stack(var* arr_of_vars);
 #endif //BACKEND_COMPILATION_H
