@@ -4,6 +4,50 @@
 
 #include "Compilation.h"
 
+void Compile_all_file(func** arr_of_func, func_info* information, char** code)
+{
+    assert(code != nullptr);
+    assert(*code != nullptr);
+    assert(information != nullptr);
+    assert(arr_of_func != nullptr);
+
+    char* pointer = strchr(*code, '#');
+    int i = 0;
+    while (pointer != nullptr)
+    {
+        arr_of_func[i] = (func*) calloc (1, sizeof(func));
+        Make_tree_from_standart(&pointer, arr_of_func[i]);
+        information[i].name = strdup(arr_of_func[i]->name);
+        printf("%s!\n", information[i].name);
+        i++;
+        pointer = strchr(pointer, '#');
+    }
+
+    size_t size_elf = calcSize("a.out");
+    char* buff = (char*) calloc (size_elf, sizeof(*buff));
+    char* saved_buff = buff;
+    read_bin(&buff, size_elf ,"a.out");
+
+    char* second_copy = buff;
+    i = 0;
+    while (arr_of_func[i] != nullptr)
+    {
+        Compile_tree(arr_of_func[i], information, &buff);
+        i++;
+    }
+
+    buff = second_copy;
+    i = 0;
+    while (arr_of_func[i] != nullptr)
+    {
+        Compile_tree(arr_of_func[i], information, &buff);
+        i++;
+    }
+
+    print_bin_file(saved_buff, size_elf, "run.out");
+    free(saved_buff);
+}
+
 Tree* Make_tree_from_standart(char** code, func* curr_func)
 {
     assert(code      != nullptr);
@@ -15,19 +59,7 @@ Tree* Make_tree_from_standart(char** code, func* curr_func)
     curr_func->code = Tree_construct();
     *code = strchr(*code, '{');
     curr_func->code->root = Make_node(curr_func->code, code, curr_func->arr_of_vars);
-    size_t size_file = calcSize("a.out");
 
-    char* buff = (char*) calloc (size_file, sizeof(*buff));
-    char* saved_buff = buff;
-
-    read_bin(&buff, size_file , "a.out");
-
-    func_info information[10] = {};
-    Compile_tree(curr_func, information, buff);
-
-    print_bin_file(saved_buff, size_file, "check.out");
-
-    //transform_var_table(curr_func);
     tree_dot(curr_func->code, "Dot.dot");
 }
 
@@ -82,9 +114,10 @@ char* GetName(char** code)
         return nullptr;
     }
 
-    char* name = (char*) calloc(*code - old_pos + 1, sizeof(*name));
+    char* name = (char*) calloc(*code - old_pos, sizeof(*name));
 
     int i = 0;
+    old_pos++;
     while(old_pos != *code)
     {
         name[i] = *old_pos;
@@ -774,21 +807,23 @@ void print_mode(vertex* pos, FILE* dot_out) {
 }
 
 char* pos = nullptr;
-size_t Compile_tree(func* curr_func, func_info* func_table, char* start_pos)
+size_t Compile_tree(func* curr_func, func_info* func_table, char** start_pos)
 {
     assert(curr_func != nullptr);
     assert(func_table != nullptr);
 
-    pos = start_pos;
+    pos = *start_pos;
 
     transform_var_table(curr_func);
+    push_func_addr(curr_func->name, func_table, *start_pos);
     start_opcodes(curr_func);
-
-    push_func_addr(curr_func->name, func_table, start_pos);
+    
     compile_node(curr_func->code->root, curr_func->arr_of_vars, func_table);
 
     end_opcodes(curr_func);
-    return pos - start_pos;
+    *start_pos = pos;
+
+    return pos - *start_pos;
 }
 
 void end_opcodes(func* curr_func)
@@ -870,7 +905,6 @@ void push_func_addr(char* name, func_info* func_table, char* start_pos)
     {
         if (!strcmp(name, func_table[i].name))
         {
-
             func_table[i].address = pos;
             break;
         }
@@ -1018,6 +1052,18 @@ void compile_node(vertex* curr_node, var* arr_of_vars, func_info* arr_of_func)
         {
             break;
         }
+        case Standart_func:
+        {
+            if (curr_node->data->info[0] == '1')
+            {
+                compile_node(curr_node->left_son, arr_of_vars, arr_of_func);
+                print();
+            }
+            else if (curr_node->data->info[0] == '0')
+            {
+                scan();
+            }
+        }
 
     }
     return;
@@ -1028,12 +1074,13 @@ char* find_add_func(char* name_func, func_info* arr_of_func)
     int i = 0;
     while (arr_of_func[i].name != nullptr)
     {
+        //printf("%s", arr_of_func[i].name);
         if (!strcmp(name_func, arr_of_func[i].name))
             return arr_of_func[i].address;
         i++;
     }
-    printf("I can't find this func - %s", name_func);
-    abort();
+    printf("I can't find this func - %s!", name_func);
+    //abort();
 }
 
 void push_param(int counter)
@@ -1364,4 +1411,218 @@ void num(int number)
 
     *pos = 0x50; // push rax
     pos++;
+}
+
+void scan() {
+    *pos++ = 0x41;
+    *pos++ = 0x53;
+    *pos++ = 0x56;
+    *pos++ = 0x57;
+    *pos++ = 0x52;
+    *pos++ = 0x51;
+    *pos++ = 0x48;
+    *pos++ = 0x83;
+    *pos++ = 0xec;
+    *pos++ = 0x10;
+    *pos++ = 0xb8;
+    *pos++ = 0x00;
+    *pos++ = 0x00;
+    *pos++ = 0x00;
+    *pos++ = 0x00;
+    *pos++ = 0x48;
+    *pos++ = 0x89;
+    *pos++ = 0xe6;
+    *pos++ = 0xba;
+    *pos++ = 0x0a;
+    *pos++ = 0x00;
+    *pos++ = 0x00;
+    *pos++ = 0x00;
+    *pos++ = 0xbf;
+    *pos++ = 0x00;
+    *pos++ = 0x00;
+    *pos++ = 0x00;
+    *pos++ = 0x00;
+    *pos++ = 0x0f;
+    *pos++ = 0x05;
+    *pos++ = 0x48;
+    *pos++ = 0x89;
+    *pos++ = 0xc1;
+    *pos++ = 0x48;
+    *pos++ = 0xff;
+    *pos++ = 0xc9;
+    *pos++ = 0x48;
+    *pos++ = 0x31;
+    *pos++ = 0xc0;
+    *pos++ = 0x41;
+    *pos++ = 0xbb;
+    *pos++ = 0x0a;
+    *pos++ = 0x00;
+    *pos++ = 0x00;
+    *pos++ = 0x00;
+    *pos++ = 0x48;
+    *pos++ = 0x31;
+    *pos++ = 0xf6;
+    *pos++ = 0x8a;
+    *pos++ = 0x1c;
+    *pos++ = 0x34;
+    *pos++ = 0x80;
+    *pos++ = 0xeb;
+    *pos++ = 0x30;
+    *pos++ = 0x49;
+    *pos++ = 0xf7;
+    *pos++ = 0xe3;
+    *pos++ = 0x48;
+    *pos++ = 0x01;
+    *pos++ = 0xd8;
+    *pos++ = 0x48;
+    *pos++ = 0xff;
+    *pos++ = 0xc6;
+    *pos++ = 0xe2;
+    *pos++ = 0xef;
+    *pos++ = 0x48;
+    *pos++ = 0x83;
+    *pos++ = 0xc4;
+    *pos++ = 0x10;
+    *pos++ = 0x59;
+    *pos++ = 0x5a;
+    *pos++ = 0x5f;
+    *pos++ = 0x5e;
+    *pos++ = 0x41;
+    *pos++ = 0x5b;
+    *pos++ = 0x50;
+}
+
+void print() {
+    /* *pos++ = 0xb8;
+    *pos++ = 0x34;
+    *pos++ = 0xb1;
+    *pos++ = 0x01;
+    *pos++ = 0x00;
+    *pos++ = 0x50;*/
+
+    *pos++ = 0x55; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x89; //ahahahhahahhahahha
+    *pos++ = 0xe5; //ahahahhahahhahahha
+    *pos++ = 0x57; //ahahahhahahhahahha
+    *pos++ = 0x56; //ahahahhahahhahahha
+    *pos++ = 0x51; //ahahahhahahhahahha
+    *pos++ = 0x52; //ahahahhahahhahahha
+    *pos++ = 0x41; //ahahahhahahhahahha
+    *pos++ = 0x53; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x83; //ahahahhahahhahahha
+    *pos++ = 0xec; //ahahahhahahhahahha
+    *pos++ = 0x10; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x8b; //ahahahhahahhahahha
+    *pos++ = 0x45; //ahahahhahahhahahha
+    *pos++ = 0x08; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x31; //ahahahhahahhahahha
+    *pos++ = 0xd2; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x39; //ahahahhahahhahahha
+    *pos++ = 0xd0; //ahahahhahahhahahha
+    *pos++ = 0x75; //ahahahhahahhahahha
+    *pos++ = 0x0c; //ahahahhahahhahahha
+    *pos++ = 0xb2; //ahahahhahahhahahha
+    *pos++ = 0x30; //ahahahhahahhahahha
+    *pos++ = 0x88; //ahahahhahahhahahha
+    *pos++ = 0x14; //ahahahhahahhahahha
+    *pos++ = 0x24; //ahahahhahahhahahha
+    *pos++ = 0xb8; //ahahahhahahhahahha
+    *pos++ = 0x01; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0xeb; //ahahahhahahhahahha
+    *pos++ = 0x3d; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x31; //ahahahhahahhahahha
+    *pos++ = 0xff; //ahahahhahahhahahha
+    *pos++ = 0xbb; //ahahahhahahhahahha
+    *pos++ = 0x0a; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0xff; //ahahahhahahhahahha
+    *pos++ = 0xc7; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x31; //ahahahhahahhahahha
+    *pos++ = 0xd2; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0xf7; //ahahahhahahhahahha
+    *pos++ = 0xf3; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x83; //ahahahhahahhahahha
+    *pos++ = 0xf8; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x75; //ahahahhahahhahahha
+    *pos++ = 0xf1; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x89; //ahahahhahahhahahha
+    *pos++ = 0xf9; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x8b; //ahahahhahahhahahha
+    *pos++ = 0x45; //ahahahhahahhahahha
+    *pos++ = 0x08; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0xff; //ahahahhahahhahahha
+    *pos++ = 0xcf; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x31; //ahahahhahahhahahha
+    *pos++ = 0xd2; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0xf7; //ahahahhahahhahahha
+    *pos++ = 0xf3; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x83; //ahahahhahahhahahha
+    *pos++ = 0xc2; //ahahahhahahhahahha
+    *pos++ = 0x30; //ahahahhahahhahahha
+    *pos++ = 0x88; //ahahahhahahhahahha
+    *pos++ = 0x14; //ahahahhahahhahahha
+    *pos++ = 0x3c; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x83; //ahahahhahahhahahha
+    *pos++ = 0xff; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x75; //ahahahhahahhahahha
+    *pos++ = 0xea; //ahahahhahahhahahha
+    *pos++ = 0xb8; //ahahahhahahhahahha
+    *pos++ = 0x0a; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x89; //ahahahhahahhahahha
+    *pos++ = 0x04; //ahahahhahahhahahha
+    *pos++ = 0x0c; //ahahahhahahhahahha
+    *pos++ = 0xb8; //ahahahhahahhahahha
+    *pos++ = 0x01; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x48; //ahahahhahahhahahha
+    *pos++ = 0x89; //ahahahhahahhahahha
+    *pos++ = 0xe6; //ahahahhahahhahahha
+    *pos++ = 0xba; //ahahahhahahhahahha
+    *pos++ = 0x0a; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0xbf; //ahahahhahahhahahha
+    *pos++ = 0x01; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x00; //ahahahhahahhahahha
+    *pos++ = 0x0f; //ahahahhahahhahahha
+    *pos++ = 0x05; //ahahahhahahhahahha
+    *pos++ = 0x41; //ahahahhahahhahahha
+    *pos++ = 0x5b; //ahahahhahahhahahha
+    *pos++ = 0x5a; //ahahahhahahhahahha
+    *pos++ = 0x59; //ahahahhahahhahahha
+    *pos++ = 0x5e; //ahahahhahahhahahha
+    *pos++ = 0x5f; //ahahahhahahhahahha
 }

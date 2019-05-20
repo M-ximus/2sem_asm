@@ -190,7 +190,7 @@ int Push_arg(var* arr_of_args, char* new_var);
 
 char* GetInf(char** code);
 
-size_t Compile_tree(func* curr_func, func_info* func_table, char* start_pos);
+size_t Compile_tree(func* curr_func, func_info* func_table, char** start_pos);
 
 void compile_node(vertex* curr_node, var* arr_of_vars, func_info* arr_of_func);
 
@@ -233,4 +233,10 @@ void print_bin_file(char* buff, size_t num_symbols, const char* path);
 void read_bin(char** buff, size_t num_symbols ,const char* path);
 
 void num(int number);
+
+void scan();
+
+void print();
+
+void Compile_all_file(func** arr_of_func, func_info* information, char** code);
 #endif //BACKEND_COMPILATION_H
