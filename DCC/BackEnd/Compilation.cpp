@@ -32,6 +32,7 @@ void Compile_all_file(func** arr_of_func, func_info* information, char** code)
     i = 0;
     while (arr_of_func[i] != nullptr)
     {
+        transform_var_table(arr_of_func[i]);
         Compile_tree(arr_of_func[i], information, &buff);
         i++;
     }
@@ -154,7 +155,7 @@ int fillArgs(char** code, var* arr_of_args)
 
         if (isalpha(**code))
         {
-            arr_of_args[num_params].name = GetName(code);
+            arr_of_args[num_params].name = GetParam(code);
             assert(arr_of_args[num_params].name != nullptr);
             num_params++;
         }
@@ -165,6 +166,32 @@ int fillArgs(char** code, var* arr_of_args)
     (*code)++;
 
     return num_params;
+}
+
+char* GetParam(char** code)
+{
+    assert(code  != nullptr);
+    assert(*code != nullptr);
+
+    char* old_pos = *code;
+    *code = strchr(*code, ' ');
+    if (*code == nullptr)
+    {
+        *code = old_pos;
+        return nullptr;
+    }
+
+    char* name = (char*) calloc(*code - old_pos, sizeof(*name));
+
+    int i = 0;
+    while(old_pos != *code)
+    {
+        name[i] = *old_pos;
+        old_pos++;
+        i++;
+    }
+    name[i] = '\0';
+    return name;
 }
 
 vertex* Make_node(Tree* mytree, char** code, var* arr_of_args)
@@ -814,10 +841,9 @@ size_t Compile_tree(func* curr_func, func_info* func_table, char** start_pos)
 
     pos = *start_pos;
 
-    transform_var_table(curr_func);
     push_func_addr(curr_func->name, func_table, *start_pos);
     start_opcodes(curr_func);
-    
+
     compile_node(curr_func->code->root, curr_func->arr_of_vars, func_table);
 
     end_opcodes(curr_func);
@@ -880,7 +906,7 @@ void start_opcodes(func* curr_func)
     int offset = num_local(curr_func->arr_of_vars);
 
     pos++;
-    *((int*) pos) = offset;
+    *((int*) pos) = offset * 8;
 
     pos++;
 }
@@ -891,7 +917,7 @@ int num_local(var* arr_of_vars)
     int counter = 0;
     while(arr_of_vars[i].name != nullptr)
     {
-        if (arr_of_vars[i].address < 0)
+        if (arr_of_vars[i].address <= 0)
             counter++;
         i++;
     }
@@ -920,7 +946,7 @@ void transform_var_table(func* curr_func)
         if (i < curr_func->num_params)
             curr_func->arr_of_vars[i].address = i + 1;
         else
-            curr_func->arr_of_vars[i].address = - ((curr_func->arr_of_vars[i].address - curr_func->num_params) * 8);
+            curr_func->arr_of_vars[i].address = - ((curr_func->arr_of_vars[i].address - curr_func->num_params + 1) * 8);
 
         printf("%s %d", curr_func->arr_of_vars[i].name, curr_func->arr_of_vars[i].address);
         i++;
@@ -1008,6 +1034,7 @@ void compile_node(vertex* curr_node, var* arr_of_vars, func_info* arr_of_func)
         {
             compile_node(curr_node->left_son, arr_of_vars, arr_of_func);
             *(pos) = 0x58;
+            pos++;
             aligh_stack(arr_of_vars);
             *(pos) = 0x5d;
             pos++;
@@ -1039,13 +1066,17 @@ void compile_node(vertex* curr_node, var* arr_of_vars, func_info* arr_of_func)
         }
         case Function:
         {
-            if (curr_node->right_daughter != nullptr)
-                compile_node(curr_node->right_daughter, arr_of_vars, arr_of_func);
+            if (curr_node->left_son != nullptr)
+                compile_node(curr_node->left_son, arr_of_vars, arr_of_func);
 
+            save_registers(arr_of_vars);
             *pos = 0xe8;
             pos++;
             *((int*) pos) = find_add_func(curr_node->data->info, arr_of_func) - (pos + 4);
             pos += 4;
+            return_registers(arr_of_vars);
+            *pos = 0x50;
+            pos++;
             break;
         }
         case Inicialise:
@@ -1267,7 +1298,7 @@ void aligh_stack(var* arr_of_vars)
     int counter = 0;
     while(arr_of_vars[i].name != nullptr)
     {
-        if (arr_of_vars[i].address < 0)
+        if (arr_of_vars[i].address <= 0)
             counter++;
         i++;
     }
@@ -1625,4 +1656,90 @@ void print() {
     *pos++ = 0x59; //ahahahhahahhahahha
     *pos++ = 0x5e; //ahahahhahahhahahha
     *pos++ = 0x5f; //ahahahhahahhahahha
+}
+
+void save_registers(var* arr_of_func)
+{
+    int i = 0;
+    while (arr_of_func[i].name != nullptr)
+    {
+        if (arr_of_func[i].address > 0)
+        {
+            switch (arr_of_func[i].address)
+            {
+                case 1:
+                    *pos = 0x57;
+                    pos++;
+                    break;
+                case 2:
+                    *pos = 0x56;
+                    pos++;
+                    break;
+                case 3:
+                    *pos = 0x52;
+                    pos++;
+                    break;
+                case 4:
+                    *pos = 0x51;
+                    pos++;
+                    break;
+                case 5:
+                    *pos = 0x41;
+                    pos++;
+                    *pos = 0x50;
+                    pos++;
+                    break;
+                case 6:
+                    *pos = 0x41;
+                    pos++;
+                    *pos = 0x51;
+                    pos++;
+                    break;
+            }
+        }
+        i++;
+    }
+}
+
+void return_registers(var* arr_of_func)
+{
+    int i = 0;
+    while (arr_of_func[i].name != nullptr)
+    {
+        if (arr_of_func[i].address > 0)
+        {
+            switch (arr_of_func[i].address)
+            {
+                case 1:
+                    *pos = 0x5f;
+                    pos++;
+                    break;
+                case 2:
+                    *pos = 0x5e;
+                    pos++;
+                    break;
+                case 3:
+                    *pos = 0x5a;
+                    pos++;
+                    break;
+                case 4:
+                    *pos = 0x59;
+                    pos++;
+                    break;
+                case 5:
+                    *pos = 0x41;
+                    pos++;
+                    *pos = 0x58;
+                    pos++;
+                    break;
+                case 6:
+                    *pos = 0x41;
+                    pos++;
+                    *pos = 0x59;
+                    pos++;
+                    break;
+            }
+        }
+        i++;
+    }
 }

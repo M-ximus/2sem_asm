@@ -239,4 +239,10 @@ void scan();
 void print();
 
 void Compile_all_file(func** arr_of_func, func_info* information, char** code);
+
+char* GetParam(char** code);
+
+void save_registers(var* arr_of_func);
+
+void return_registers(var* arr_of_func);
 #endif //BACKEND_COMPILATION_H
